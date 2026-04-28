@@ -36,4 +36,3 @@ externalPort = 80
 [userenv]
 
 [userenv.shared]
-"Gemini API Key" = "AIzaSyA7rTQm5mNix_TOTLnZn9-3sCNTlbkUjJw"
