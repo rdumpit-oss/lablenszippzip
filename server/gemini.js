@@ -189,17 +189,20 @@ export async function analyzeWithGemini({ apiKey, imageData, mediaType, context,
   const lang = LANGUAGE_LABELS[language] ? language : "en";
   const mt = ALLOWED_MEDIA.includes(mediaType) ? mediaType : "image/jpeg";
 
-  let userText;
+  let preImageText;
+  let postImageText;
   if (lang === "fil") {
-    userText = (context
-      ? `Pakisuri ang resulta ng lab na ito. Konteksto ng pasyente: ${context}\n\n`
-      : `Pakisuri ang resulta ng lab na ito.\n\n`)
-      + `MAHALAGA: Isulat ang BUONG sagot mo sa wikang FILIPINO (Tagalog). Lahat ng text values sa JSON — kasama ang summary, name, explanation, possibleCauses, possibleRemedies, questionsToAsk, followUpQuestions, at glossary definitions — ay DAPAT nasa Filipino. HUWAG mag-English. Filipino lang.`;
+    preImageText = `WIKA: FILIPINO (Tagalog) LAMANG. Lahat ng text values sa JSON output ay DAPAT nasa Filipino. HUWAG sumagot sa English.\n\nNarito ang larawan ng lab result na susuriin mo:`;
+    postImageText = (context
+      ? `\nKonteksto ng pasyente: ${context}\n\n`
+      : `\n\n`)
+      + `Suriin ang lab result sa larawan sa itaas at ibalik ang buong JSON response sa wikang FILIPINO (Tagalog). Ulitin: lahat ng summary, overallLabel, name, explanation, possibleCauses, possibleRemedies, questionsToAsk, followUpQuestions, at glossary.definition ay DAPAT nasa FILIPINO. HUWAG MAG-ENGLISH. Filipino lamang.`;
   } else {
-    userText = (context
-      ? `Please analyze this lab result. Patient context: ${context}\n\n`
-      : `Please analyze this lab result.\n\n`)
-      + `Write the entire response in English.`;
+    preImageText = `LANGUAGE: English only. All text values in the JSON output must be in English.\n\nHere is the lab result image to analyze:`;
+    postImageText = (context
+      ? `\nPatient context: ${context}\n\n`
+      : `\n\n`)
+      + `Analyze the lab result in the image above and return the full JSON response in English.`;
   }
 
   const payload = {
@@ -207,13 +210,14 @@ export async function analyzeWithGemini({ apiKey, imageData, mediaType, context,
     contents: [{
       role: "user",
       parts: [
+        { text: preImageText },
         { inline_data: { mime_type: mt, data: imageData } },
-        { text: userText },
+        { text: postImageText },
       ],
     }],
     generationConfig: {
-      maxOutputTokens: 6000,
-      temperature: 0.2,
+      maxOutputTokens: 8000,
+      temperature: 0.15,
       responseMimeType: "application/json",
     },
   };
