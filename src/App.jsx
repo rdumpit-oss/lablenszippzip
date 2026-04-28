@@ -26,6 +26,9 @@ const STRINGS = {
     referenceRange: "Reference range",
     questionsTitle: "Questions to ask your doctor",
     followUpTitle: "Follow-up questions on abnormal results",
+    causesLabel: "Possible causes",
+    remediesLabel: "Possible remedies",
+    remediesNote: "Discuss these with your doctor before acting on them.",
     disclaimerL1: "LabLens uses AI to translate medical jargon into plain language. It does not diagnose, treat, or replace a licensed medical professional.",
     disclaimerL2: "Always discuss your results with your doctor before making any health decisions.",
     statusLabels: { normal: "Within range", low: "Below range", high: "Above range", critical: "Needs attention" },
@@ -57,6 +60,9 @@ const STRINGS = {
     referenceRange: "Karaniwang saklaw",
     questionsTitle: "Mga itatanong sa doktor mo",
     followUpTitle: "Mga follow-up na tanong sa abnormal na resulta",
+    causesLabel: "Mga posibleng dahilan",
+    remediesLabel: "Mga posibleng lunas",
+    remediesNote: "Talakayin muna ito sa iyong doktor bago gawin.",
     disclaimerL1: "Gumagamit ang LabLens ng AI upang isalin ang medikal na jargon sa simpleng wika. Hindi ito nagdi-diagnose, gumagamot, o kapalit ng lisensyadong propesyonal sa medisina.",
     disclaimerL2: "Palaging talakayin ang iyong resulta sa doktor bago gumawa ng anumang desisyon pangkalusugan.",
     statusLabels: { normal: "Nasa saklaw", low: "Mababa", high: "Mataas", critical: "Kailangan ng pansin" },
@@ -304,6 +310,12 @@ export default function LabLens() {
     qTitle:   { fontSize:15, fontWeight:600, marginBottom:12, display:"flex", alignItems:"center", gap:7, color:c.text },
     qItem:    { fontSize:13, color:c.textSecondary, padding:"9px 13px", background:c.inputBg, borderRadius:9, lineHeight:1.5, marginBottom:7, border:`1px solid ${c.borderFaint}`, fontFamily:"sans-serif" },
 
+    detailBlock:    { marginTop:12, paddingTop:12, borderTop:`1px solid ${c.borderFaint}` },
+    detailLabel:    { fontSize:10.5, fontWeight:600, letterSpacing:"0.08em", textTransform:"uppercase", color:c.textMuted, marginBottom:7, fontFamily:"sans-serif", display:"flex", alignItems:"center", gap:6 },
+    detailItem:     { fontSize:12.5, color:c.textSecondary, lineHeight:1.55, padding:"5px 0 5px 14px", position:"relative", fontFamily:"sans-serif" },
+    detailBullet:   { position:"absolute", left:0, top:5, color:c.textMuted },
+    remedyNote:     { fontSize:11, color:c.textFaint, fontStyle:"italic", marginTop:6, fontFamily:"sans-serif" },
+
     disclaimer: { fontSize:11.5, color:c.textFaint, textAlign:"center", lineHeight:1.6, paddingTop:14, marginTop:8, borderTop:`1px solid ${c.borderFaint}`, fontFamily:"sans-serif" },
   }), [c, dragging]);
 
@@ -458,6 +470,39 @@ export default function LabLens() {
                     {r.referenceRange && <div style={s.riRange}>{t.referenceRange}: {r.referenceRange}</div>}
                     <div style={s.riExp}>{r.explanation}</div>
                     <div style={{ ...s.riFlag, background:sc.bg, color:sc.text, border:`1px solid ${sc.border}` }}>{statusLabel(r.status)}</div>
+
+                    {r.status !== "normal" && r.possibleCauses?.length > 0 && (
+                      <div style={s.detailBlock}>
+                        <div style={s.detailLabel}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                          </svg>
+                          {t.causesLabel}
+                        </div>
+                        {r.possibleCauses.map((cause, j) => (
+                          <div key={j} style={s.detailItem}>
+                            <span style={s.detailBullet}>•</span>{cause}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {r.status !== "normal" && r.possibleRemedies?.length > 0 && (
+                      <div style={s.detailBlock}>
+                        <div style={s.detailLabel}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                          </svg>
+                          {t.remediesLabel}
+                        </div>
+                        {r.possibleRemedies.map((remedy, j) => (
+                          <div key={j} style={s.detailItem}>
+                            <span style={s.detailBullet}>•</span>{remedy}
+                          </div>
+                        ))}
+                        <div style={s.remedyNote}>{t.remediesNote}</div>
+                      </div>
+                    )}
                   </div>
                 );
               })}

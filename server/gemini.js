@@ -19,7 +19,9 @@ Analyze the lab result image and respond ONLY with a valid JSON object in this e
       "value": "Value with unit",
       "referenceRange": "Reference range or null",
       "status": "normal" | "low" | "high" | "critical",
-      "explanation": "Plain-language explanation under 40 words"
+      "explanation": "Plain-language explanation under 40 words",
+      "possibleCauses": ["Short reason 1", "Short reason 2", "Short reason 3"],
+      "possibleRemedies": ["Short remedy 1", "Short remedy 2", "Short remedy 3"]
     }
   ],
   "questionsToAsk": ["Question 1", "Question 2", "Question 3"],
@@ -27,7 +29,7 @@ Analyze the lab result image and respond ONLY with a valid JSON object in this e
 }
 
 Rules:
-- Write ALL human-readable text fields (overallLabel, summary, name, value, referenceRange, explanation, questionsToAsk, followUpQuestions) in ${langName}.
+- Write ALL human-readable text fields (overallLabel, summary, name, value, referenceRange, explanation, possibleCauses, possibleRemedies, questionsToAsk, followUpQuestions) in ${langName}.
 - Keep the JSON keys and the enum values for "overallStatus" and "status" in English exactly as shown above.
 - Extract every individual test result visible in the image.
 - Keep explanations simple, no jargon.
@@ -35,6 +37,8 @@ Rules:
 - If the image is not a lab result, set results to [] and explain in summary.
 - Return ONLY JSON — no markdown, no backticks.
 - Keep each explanation under 40 words.
+- possibleCauses: 2-4 short bullet phrases (under 15 words each) explaining the most common reasons a value is high or low. ONLY include this field for results with status "low", "high", or "critical". For "normal" results return an empty array [].
+- possibleRemedies: 2-4 short bullet phrases (under 15 words each) with lifestyle changes, dietary tips, or medical actions that may help bring the value back into range. ONLY include this field for results with status "low", "high", or "critical". For "normal" results return an empty array []. Always frame remedies as suggestions to discuss with a doctor — never as prescriptions.
 - questionsToAsk: up to 3 GENERAL questions to ask the doctor about these results overall.
 - followUpQuestions: up to 4 SPECIFIC follow-up questions tied directly to the abnormal/borderline values found (causes, lifestyle changes, retesting, treatment options). If everything is normal, return an empty array for followUpQuestions.`;
 }
