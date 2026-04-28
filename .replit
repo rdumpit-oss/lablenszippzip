@@ -36,4 +36,4 @@ externalPort = 80
 [userenv]
 
 [userenv.shared]
-ANTHROPIC_API_KEY = "console.anthropic.com"
+"Gemini API Key" = "AIzaSyA7rTQm5mNix_TOTLnZn9-3sCNTlbkUjJw"
