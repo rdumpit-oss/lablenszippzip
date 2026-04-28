@@ -29,6 +29,15 @@ const STRINGS = {
     causesLabel: "Possible causes",
     remediesLabel: "Possible remedies",
     remediesNote: "Discuss these with your doctor before acting on them.",
+    chatTitle: "Ask LabLens a follow-up",
+    chatHint: "Ask anything about your results — what a value means, what to do next, how to prepare to talk to your doctor.",
+    chatPlaceholder: "Type your question…",
+    chatSend: "Send",
+    chatThinking: "Thinking…",
+    chatYou: "You",
+    chatBot: "LabLens",
+    chatErrorPrefix: "Couldn't send: ",
+    glossaryHint: "Hover the underlined words for a plain-language definition.",
     disclaimerL1: "LabLens uses AI to translate medical jargon into plain language. It does not diagnose, treat, or replace a licensed medical professional.",
     disclaimerL2: "Always discuss your results with your doctor before making any health decisions.",
     statusLabels: { normal: "Within range", low: "Below range", high: "Above range", critical: "Needs attention" },
@@ -63,6 +72,15 @@ const STRINGS = {
     causesLabel: "Mga posibleng dahilan",
     remediesLabel: "Mga posibleng lunas",
     remediesNote: "Talakayin muna ito sa iyong doktor bago gawin.",
+    chatTitle: "Magtanong sa LabLens",
+    chatHint: "Magtanong tungkol sa iyong resulta — kung ano ang ibig sabihin ng halaga, ano ang susunod na gagawin, o paano ihanda ang sarili para sa doktor.",
+    chatPlaceholder: "I-type ang iyong tanong…",
+    chatSend: "Ipadala",
+    chatThinking: "Iniisip…",
+    chatYou: "Ikaw",
+    chatBot: "LabLens",
+    chatErrorPrefix: "Hindi naipadala: ",
+    glossaryHint: "I-hover ang mga may guhit na salita para sa simpleng paliwanag.",
     disclaimerL1: "Gumagamit ang LabLens ng AI upang isalin ang medikal na jargon sa simpleng wika. Hindi ito nagdi-diagnose, gumagamot, o kapalit ng lisensyadong propesyonal sa medisina.",
     disclaimerL2: "Palaging talakayin ang iyong resulta sa doktor bago gumawa ng anumang desisyon pangkalusugan.",
     statusLabels: { normal: "Nasa saklaw", low: "Mababa", high: "Mataas", critical: "Kailangan ng pansin" },
@@ -146,6 +164,48 @@ const PALETTES = {
   },
 };
 
+// ─── Glossary tooltip rendering ────────────────────────────────────────────
+function escapeRegex(s) {
+  return s.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+}
+
+function GlossyText({ text, glossary }) {
+  if (!text || typeof text !== "string") return text || null;
+  if (!glossary || glossary.length === 0) return text;
+
+  const valid = glossary.filter((g) => g && typeof g.term === "string" && g.term.trim().length > 1);
+  if (valid.length === 0) return text;
+
+  const sorted = [...valid].sort((a, b) => b.term.length - a.term.length);
+  const pattern = sorted.map((g) => escapeRegex(g.term)).join("|");
+  const re = new RegExp(`(${pattern})`, "gi");
+
+  const lookup = new Map(valid.map((g) => [g.term.toLowerCase(), g.definition || ""]));
+  const segments = [];
+  let last = 0;
+  let m;
+  re.lastIndex = 0;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) segments.push(text.slice(last, m.index));
+    const matched = m[0];
+    const def = lookup.get(matched.toLowerCase());
+    if (def) {
+      segments.push(
+        <span className="gloss" key={`${m.index}-${matched}`} tabIndex={0}>
+          {matched}
+          <span className="gloss-pop">{def}</span>
+        </span>
+      );
+    } else {
+      segments.push(matched);
+    }
+    last = m.index + matched.length;
+    if (m.index === re.lastIndex) re.lastIndex++;
+  }
+  if (last < text.length) segments.push(text.slice(last));
+  return <>{segments}</>;
+}
+
 export default function LabLens() {
   const [screen, setScreen]       = useState("upload");
   const [imageData, setImageData] = useState(null);
@@ -159,6 +219,11 @@ export default function LabLens() {
   const [dragging, setDragging]   = useState(false);
   const [lang, setLang]           = useState(() => localStorage.getItem("lablens.lang") || "en");
   const [theme, setTheme]         = useState(() => localStorage.getItem("lablens.theme") || "light");
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatSending, setChatSending] = useState(false);
+  const [chatError, setChatError] = useState("");
+  const chatScrollRef = useRef(null);
   const fileRef = useRef();
 
   const t = STRINGS[lang];
@@ -216,6 +281,8 @@ export default function LabLens() {
       }
 
       setResults(data.content);
+      setChatMessages([]);
+      setChatError("");
       setScreen("results");
     } catch (err) {
       setErrorMsg(err.message || "Unknown error");
@@ -231,8 +298,41 @@ export default function LabLens() {
     setContext("");
     setResults(null);
     setErrorMsg("");
+    setChatMessages([]);
+    setChatInput("");
+    setChatError("");
     if (fileRef.current) fileRef.current.value = "";
   };
+
+  const sendChat = async () => {
+    const text = chatInput.trim();
+    if (!text || chatSending) return;
+    const newHistory = [...chatMessages, { role: "user", content: text }];
+    setChatMessages(newHistory);
+    setChatInput("");
+    setChatError("");
+    setChatSending(true);
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language: lang, labContext: results, messages: newHistory }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error?.message || `Error ${res.status}`);
+      setChatMessages([...newHistory, { role: "assistant", content: data.reply }]);
+    } catch (err) {
+      setChatError(err.message || "Unknown error");
+    } finally {
+      setChatSending(false);
+    }
+  };
+
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [chatMessages, chatSending]);
 
   const dateLocale = lang === "fil" ? "fil-PH" : "en-US";
 
@@ -316,8 +416,23 @@ export default function LabLens() {
     detailBullet:   { position:"absolute", left:0, top:5, color:c.textMuted },
     remedyNote:     { fontSize:11, color:c.textFaint, fontStyle:"italic", marginTop:6, fontFamily:"sans-serif" },
 
+    chatHint:    { fontSize:12, color:c.textMuted, marginBottom:14, fontFamily:"sans-serif", lineHeight:1.5 },
+    chatScroll:  { maxHeight:340, overflowY:"auto", marginBottom:12, paddingRight:4, display:"flex", flexDirection:"column", gap:10 },
+    chatBubbleU: { alignSelf:"flex-end", maxWidth:"85%", background:c.btnBg, color:c.btnText, padding:"9px 13px", borderRadius:"14px 14px 4px 14px", fontSize:13, lineHeight:1.5, fontFamily:"sans-serif", whiteSpace:"pre-wrap", wordBreak:"break-word", animation:"fadeIn 0.18s ease" },
+    chatBubbleA: { alignSelf:"flex-start", maxWidth:"90%", background:c.inputBg, color:c.textSecondary, padding:"9px 13px", borderRadius:"14px 14px 14px 4px", fontSize:13, lineHeight:1.55, fontFamily:"sans-serif", border:`1px solid ${c.borderFaint}`, whiteSpace:"pre-wrap", wordBreak:"break-word", animation:"fadeIn 0.18s ease" },
+    chatRoleTag: { fontSize:10, color:c.textFaint, fontWeight:600, letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:3, fontFamily:"sans-serif" },
+    chatThinkBox:{ alignSelf:"flex-start", background:c.inputBg, color:c.textMuted, padding:"9px 13px", borderRadius:"14px 14px 14px 4px", fontSize:13, fontFamily:"sans-serif", border:`1px solid ${c.borderFaint}`, fontStyle:"italic" },
+    chatInputRow:{ display:"flex", gap:8 },
+    chatInput:   { flex:1, background:c.inputBg, border:`1px solid ${c.borderStrong}`, borderRadius:9, padding:"10px 13px", fontFamily:"sans-serif", fontSize:13, color:c.text, resize:"none", outline:"none", lineHeight:1.5, minHeight:42 },
+    chatSendBtn: { background:c.btnBg, color:c.btnText, border:"none", borderRadius:9, padding:"0 18px", fontFamily:"sans-serif", fontSize:13, fontWeight:500, cursor:"pointer", display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" },
+    chatSendBtnDisabled: { opacity:0.5, cursor:"not-allowed" },
+    chatErr:     { fontSize:12, color:c.errBox.title, marginTop:8, fontFamily:"sans-serif" },
+
     disclaimer: { fontSize:11.5, color:c.textFaint, textAlign:"center", lineHeight:1.6, paddingTop:14, marginTop:8, borderTop:`1px solid ${c.borderFaint}`, fontFamily:"sans-serif" },
   }), [c, dragging]);
+
+  const glossary = results?.glossary || [];
+  const G = (text) => <GlossyText text={text} glossary={glossary} />;
 
   const statusLabel = (status) => t.statusLabels[status] || t.statusLabels.normal;
 
@@ -452,8 +567,17 @@ export default function LabLens() {
               <div style={{ fontSize:11, fontWeight:600, letterSpacing:"0.08em", textTransform:"uppercase", color:ov.border, marginBottom:4, fontFamily:"sans-serif" }}>
                 {results.overallLabel || t.overallAssessment}
               </div>
-              <div style={{ fontSize:14, color:c.textSecondary, lineHeight:1.65, fontFamily:"sans-serif" }}>{results.summary}</div>
+              <div style={{ fontSize:14, color:c.textSecondary, lineHeight:1.65, fontFamily:"sans-serif" }}>{G(results.summary)}</div>
             </div>
+
+            {glossary.length > 0 && (
+              <div style={{ fontSize:11.5, color:c.textMuted, fontStyle:"italic", marginBottom:18, fontFamily:"sans-serif", display:"flex", alignItems:"center", gap:6 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+                {t.glossaryHint}
+              </div>
+            )}
 
             <div style={{ marginBottom:24 }}>
               {(results.results || []).map((r, i) => {
@@ -461,14 +585,14 @@ export default function LabLens() {
                 return (
                   <div key={i} style={s.resultItem}>
                     <div style={s.riHeader}>
-                      <div style={s.riName}>{r.name}</div>
+                      <div style={s.riName}>{G(r.name)}</div>
                       <div style={s.riValWrap}>
                         <div style={{ width:8, height:8, borderRadius:"50%", background:sc.dot, flexShrink:0 }} />
                         <div style={{ fontFamily:"Georgia,serif", fontSize:17, fontWeight:600, color:sc.text }}>{r.value}</div>
                       </div>
                     </div>
                     {r.referenceRange && <div style={s.riRange}>{t.referenceRange}: {r.referenceRange}</div>}
-                    <div style={s.riExp}>{r.explanation}</div>
+                    <div style={s.riExp}>{G(r.explanation)}</div>
                     <div style={{ ...s.riFlag, background:sc.bg, color:sc.text, border:`1px solid ${sc.border}` }}>{statusLabel(r.status)}</div>
 
                     {r.status !== "normal" && r.possibleCauses?.length > 0 && (
@@ -481,7 +605,7 @@ export default function LabLens() {
                         </div>
                         {r.possibleCauses.map((cause, j) => (
                           <div key={j} style={s.detailItem}>
-                            <span style={s.detailBullet}>•</span>{cause}
+                            <span style={s.detailBullet}>•</span>{G(cause)}
                           </div>
                         ))}
                       </div>
@@ -497,7 +621,7 @@ export default function LabLens() {
                         </div>
                         {r.possibleRemedies.map((remedy, j) => (
                           <div key={j} style={s.detailItem}>
-                            <span style={s.detailBullet}>•</span>{remedy}
+                            <span style={s.detailBullet}>•</span>{G(remedy)}
                           </div>
                         ))}
                         <div style={s.remedyNote}>{t.remediesNote}</div>
@@ -517,7 +641,7 @@ export default function LabLens() {
                   {t.questionsTitle}
                 </div>
                 {results.questionsToAsk.map((q, i) => (
-                  <div key={i} style={s.qItem}>→ {q}</div>
+                  <div key={i} style={s.qItem}>→ {G(q)}</div>
                 ))}
               </div>
             )}
@@ -531,10 +655,68 @@ export default function LabLens() {
                   {t.followUpTitle}
                 </div>
                 {results.followUpQuestions.map((q, i) => (
-                  <div key={i} style={s.qItem}>→ {q}</div>
+                  <div key={i} style={s.qItem}>→ {G(q)}</div>
                 ))}
               </div>
             )}
+
+            {/* ── Chat ── */}
+            <div style={s.qSection}>
+              <div style={s.qTitle}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c.iconStroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                {t.chatTitle}
+              </div>
+              <div style={s.chatHint}>{t.chatHint}</div>
+
+              {chatMessages.length > 0 && (
+                <div ref={chatScrollRef} style={s.chatScroll}>
+                  {chatMessages.map((m, i) => (
+                    <div key={i} style={{ display:"flex", flexDirection:"column", alignItems: m.role === "user" ? "flex-end" : "flex-start" }}>
+                      <div style={s.chatRoleTag}>{m.role === "user" ? t.chatYou : t.chatBot}</div>
+                      <div style={m.role === "user" ? s.chatBubbleU : s.chatBubbleA}>
+                        {m.role === "user" ? m.content : G(m.content)}
+                      </div>
+                    </div>
+                  ))}
+                  {chatSending && (
+                    <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-start" }}>
+                      <div style={s.chatRoleTag}>{t.chatBot}</div>
+                      <div style={s.chatThinkBox}>{t.chatThinking}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div style={s.chatInputRow}>
+                <textarea
+                  style={s.chatInput}
+                  rows={1}
+                  placeholder={t.chatPlaceholder}
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      sendChat();
+                    }
+                  }}
+                  disabled={chatSending}
+                />
+                <button
+                  style={{ ...s.chatSendBtn, ...(chatSending || !chatInput.trim() ? s.chatSendBtnDisabled : {}) }}
+                  onClick={sendChat}
+                  disabled={chatSending || !chatInput.trim()}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                  </svg>
+                  {t.chatSend}
+                </button>
+              </div>
+              {chatError && <div style={s.chatErr}>{t.chatErrorPrefix}{chatError}</div>}
+            </div>
 
             <div style={s.disclaimer}>
               {t.disclaimerL1}<br />
