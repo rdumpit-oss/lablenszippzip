@@ -15,6 +15,7 @@ export default async function handler(req, res) {
       imageData: req.body?.imageData,
       mediaType: req.body?.mediaType,
       context: req.body?.context,
+      language: req.body?.language,
     });
     return res.status(result.status).json(result.body);
   } catch (err) {

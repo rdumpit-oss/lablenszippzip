@@ -1,4 +1,11 @@
-const SYSTEM_PROMPT = `You are LabLens, an expert medical lab result interpreter. Your job is to translate lab results into plain language that a non-medical person can understand.
+const LANGUAGE_LABELS = {
+  en: "English",
+  fil: "Filipino (Tagalog)",
+};
+
+function buildSystemPrompt(language) {
+  const langName = LANGUAGE_LABELS[language] || "English";
+  return `You are LabLens, an expert medical lab result interpreter. Your job is to translate lab results into plain language that a non-medical person can understand.
 
 Analyze the lab result image and respond ONLY with a valid JSON object in this exact format:
 
@@ -15,23 +22,28 @@ Analyze the lab result image and respond ONLY with a valid JSON object in this e
       "explanation": "Plain-language explanation under 40 words"
     }
   ],
-  "questionsToAsk": ["Question 1", "Question 2", "Question 3"]
+  "questionsToAsk": ["Question 1", "Question 2", "Question 3"],
+  "followUpQuestions": ["Follow-up question 1", "Follow-up question 2", "Follow-up question 3"]
 }
 
 Rules:
-- Extract every individual test result visible in the image
-- Keep explanations simple, no jargon
-- If value is flagged H or L, reflect that in status
-- If not a lab result, set results to [] and explain in summary
-- Return ONLY JSON, no markdown, no backticks
-- Keep each explanation under 40 words
-- questionsToAsk: maximum 3 items`;
+- Write ALL human-readable text fields (overallLabel, summary, name, value, referenceRange, explanation, questionsToAsk, followUpQuestions) in ${langName}.
+- Keep the JSON keys and the enum values for "overallStatus" and "status" in English exactly as shown above.
+- Extract every individual test result visible in the image.
+- Keep explanations simple, no jargon.
+- If a value is flagged H or L, reflect that in status.
+- If the image is not a lab result, set results to [] and explain in summary.
+- Return ONLY JSON — no markdown, no backticks.
+- Keep each explanation under 40 words.
+- questionsToAsk: up to 3 GENERAL questions to ask the doctor about these results overall.
+- followUpQuestions: up to 4 SPECIFIC follow-up questions tied directly to the abnormal/borderline values found (causes, lifestyle changes, retesting, treatment options). If everything is normal, return an empty array for followUpQuestions.`;
+}
 
 const ALLOWED_MEDIA = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
 const GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
-export async function analyzeWithGemini({ apiKey, imageData, mediaType, context }) {
+export async function analyzeWithGemini({ apiKey, imageData, mediaType, context, language }) {
   if (!apiKey) {
     return { status: 500, body: { error: { message: "GEMINI_API_KEY not configured" } } };
   }
@@ -39,13 +51,15 @@ export async function analyzeWithGemini({ apiKey, imageData, mediaType, context 
     return { status: 400, body: { error: { message: "imageData is required" } } };
   }
 
+  const lang = LANGUAGE_LABELS[language] ? language : "en";
   const mt = ALLOWED_MEDIA.includes(mediaType) ? mediaType : "image/jpeg";
+  const langName = LANGUAGE_LABELS[lang];
   const userText = context
-    ? `Analyze this lab result. Patient context: ${context}`
-    : "Analyze this lab result.";
+    ? `Analyze this lab result and respond in ${langName}. Patient context: ${context}`
+    : `Analyze this lab result and respond in ${langName}.`;
 
   const payload = {
-    system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    system_instruction: { parts: [{ text: buildSystemPrompt(lang) }] },
     contents: [{
       role: "user",
       parts: [

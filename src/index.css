@@ -11,9 +11,12 @@ html, body, #root {
 }
 
 body {
-  background: #f7f3ee;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.25s ease;
 }
+
+body[data-theme="light"] { background: #f7f3ee; }
+body[data-theme="dark"]  { background: #14110e; }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
