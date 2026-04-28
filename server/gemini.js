@@ -4,8 +4,9 @@ const LANGUAGE_LABELS = {
 };
 
 const ALLOWED_MEDIA = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
-const GEMINI_MODEL = "gemini-2.5-flash";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-flash-lite"];
+const geminiUrl = (model) => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function buildSystemPrompt(language) {
   const isFil = language === "fil";
@@ -169,13 +170,47 @@ Guidelines:
 }
 
 async function callGemini(payload, apiKey) {
-  const upstream = await fetch(`${GEMINI_URL}?key=${encodeURIComponent(apiKey)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const data = await upstream.json().catch(() => ({}));
-  return { upstream, data };
+  // Try each model in order. For each model, retry transient overload errors with backoff.
+  const transient = new Set([429, 500, 502, 503, 504]);
+  let lastUpstream = null;
+  let lastData = null;
+
+  for (const model of GEMINI_MODELS) {
+    const url = `${geminiUrl(model)}?key=${encodeURIComponent(apiKey)}`;
+    const delays = [0, 800, 2000]; // up to 3 attempts per model
+    for (let i = 0; i < delays.length; i++) {
+      if (delays[i] > 0) await sleep(delays[i]);
+      let upstream, data;
+      try {
+        upstream = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        data = await upstream.json().catch(() => ({}));
+      } catch (err) {
+        lastUpstream = { ok: false, status: 502 };
+        lastData = { error: { message: err?.message || "network error" } };
+        continue;
+      }
+      lastUpstream = upstream;
+      lastData = data;
+      if (upstream.ok) return { upstream, data };
+      if (!transient.has(upstream.status)) {
+        // Non-transient error (auth, bad request, etc) — don't retry, don't try other models
+        return { upstream, data };
+      }
+      // transient — loop to next attempt; if exhausted, fall through to next model
+    }
+  }
+  return { upstream: lastUpstream, data: lastData };
+}
+
+function friendlyUpstreamMessage(status, raw) {
+  if (status === 429) return "Gemini's free tier rate limit was hit. Please wait a moment and try again.";
+  if (status === 503 || status === 502 || status === 504) return "Gemini is temporarily overloaded. We tried a few times and a backup model. Please try again in a minute.";
+  if (status === 500) return "Gemini hit an internal error. Please try again.";
+  return raw || `Gemini API error ${status}`;
 }
 
 export async function analyzeWithGemini({ apiKey, imageData, mediaType, context, language }) {
@@ -225,7 +260,7 @@ export async function analyzeWithGemini({ apiKey, imageData, mediaType, context,
   const { upstream, data } = await callGemini(payload, apiKey);
 
   if (!upstream.ok) {
-    return { status: upstream.status, body: { error: { message: data?.error?.message || `Gemini API error ${upstream.status}` } } };
+    return { status: upstream.status, body: { error: { message: friendlyUpstreamMessage(upstream.status, data?.error?.message) } } };
   }
 
   const rawText = (data?.candidates?.[0]?.content?.parts || [])
@@ -294,7 +329,7 @@ export async function chatWithGemini({ apiKey, language, labContext, messages })
   const { upstream, data } = await callGemini(payload, apiKey);
 
   if (!upstream.ok) {
-    return { status: upstream.status, body: { error: { message: data?.error?.message || `Gemini API error ${upstream.status}` } } };
+    return { status: upstream.status, body: { error: { message: friendlyUpstreamMessage(upstream.status, data?.error?.message) } } };
   }
 
   const reply = (data?.candidates?.[0]?.content?.parts || [])
