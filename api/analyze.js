@@ -1,37 +1,23 @@
 // api/analyze.js
-// Vercel serverless function — keeps your Anthropic API key server-side.
-// The frontend calls /api/analyze instead of Anthropic directly.
+// Vercel serverless function — keeps your Gemini API key server-side.
+// The frontend posts { imageData, mediaType, context } and gets back { content: {...} }.
+
+import { analyzeWithGemini } from "../server/gemini.js";
 
 export default async function handler(req, res) {
-  // Only allow POST
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: "ANTHROPIC_API_KEY not configured" });
+    return res.status(405).json({ error: { message: "Method not allowed" } });
   }
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify(req.body),
+    const result = await analyzeWithGemini({
+      apiKey: (process.env.GEMINI_API_KEY || "").trim(),
+      imageData: req.body?.imageData,
+      mediaType: req.body?.mediaType,
+      context: req.body?.context,
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(response.status).json(data);
-    }
-
-    return res.status(200).json(data);
+    return res.status(result.status).json(result.body);
   } catch (err) {
-    return res.status(500).json({ error: err.message || "Internal server error" });
+    return res.status(500).json({ error: { message: err?.message || "Internal server error" } });
   }
 }

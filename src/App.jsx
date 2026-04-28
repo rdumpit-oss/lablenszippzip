@@ -1,34 +1,5 @@
 import { useState, useRef, useCallback } from "react";
 
-const SYSTEM_PROMPT = `You are LabLens, an expert medical lab result interpreter. Your job is to translate lab results into plain language that a non-medical person can understand.
-
-Analyze the lab result image and respond ONLY with a valid JSON object in this exact format:
-
-{
-  "overallStatus": "normal" | "attention" | "concern",
-  "overallLabel": "Short status label",
-  "summary": "2-3 sentence plain-language overall summary",
-  "results": [
-    {
-      "name": "Test name",
-      "value": "Value with unit",
-      "referenceRange": "Reference range or null",
-      "status": "normal" | "low" | "high" | "critical",
-      "explanation": "Plain-language explanation under 40 words"
-    }
-  ],
-  "questionsToAsk": ["Question 1", "Question 2", "Question 3"]
-}
-
-Rules:
-- Extract every individual test result visible in the image
-- Keep explanations simple, no jargon
-- If value is flagged H or L, reflect that in status
-- If not a lab result, set results to [] and explain in summary
-- Return ONLY JSON, no markdown, no backticks
-- Keep each explanation under 40 words
-- questionsToAsk: maximum 3 items`;
-
 const STATUS_COLORS = {
   normal:   { dot: "#2d6a4f", text: "#2d6a4f", bg: "#e8f4ef", border: "#a8d5bb", label: "Within range" },
   low:      { dot: "#c87941", text: "#c87941", bg: "#fdf0e6", border: "#f0c090", label: "Below range" },
@@ -86,54 +57,19 @@ export default function LabLens() {
     setErrorMsg("");
 
     try {
-      // Calls our serverless function — key never exposed to browser
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 4000,
-          system: SYSTEM_PROMPT,
-          messages: [{
-            role: "user",
-            content: [
-              { type: "image", source: { type: "base64", media_type: mediaType, data: imageData } },
-              { type: "text", text: context
-                  ? `Analyze this lab result. Patient context: ${context}`
-                  : "Analyze this lab result." }
-            ]
-          }]
-        })
+        body: JSON.stringify({ imageData, mediaType, context }),
       });
 
+      const data = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err?.error?.message || `API error ${response.status}`);
+        throw new Error(data?.error?.message || `API error ${response.status}`);
       }
 
-      const data = await response.json();
-      const rawText = (data.content?.[0]?.text || "")
-        .trim()
-        .replace(/^```json\s*/i, "")
-        .replace(/```\s*$/, "");
-
-      const match = rawText.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error("Claude did not return structured data. Please try again.");
-
-      let parsed;
-      try {
-        parsed = JSON.parse(match[0]);
-      } catch {
-        // Try auto-closing common truncations
-        const fixes = ["]}",'"]}','"]}}',"]}}}",'"]}}}}"'];
-        let fixed = false;
-        for (const suffix of fixes) {
-          try { parsed = JSON.parse(match[0] + suffix); fixed = true; break; } catch {}
-        }
-        if (!fixed) throw new Error("Response was cut off. Please try again.");
-      }
-
-      setResults(parsed);
+      setResults(data.content);
       setScreen("results");
     } catch (err) {
       setErrorMsg(err.message || "Unknown error");

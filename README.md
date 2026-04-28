@@ -2,7 +2,7 @@
 
 AI-powered lab result explainer. Upload a photo of your lab results and get a plain-language breakdown of every value — what it measures, what your number means, and questions to ask your doctor.
 
-Built with React + Vite, deployed on Vercel, powered by Claude's vision API.
+Built with React + Vite, deployed on Vercel, powered by Google Gemini's vision API (free tier).
 
 ---
 
@@ -22,12 +22,12 @@ npm install
 cp .env.example .env
 ```
 
-Open `.env` and paste your Anthropic API key:
+Open `.env` and paste your Gemini API key:
 ```
-ANTHROPIC_API_KEY=sk-ant-your-key-here
+GEMINI_API_KEY=your-gemini-key-here
 ```
 
-Get a key at [console.anthropic.com](https://console.anthropic.com).
+Get a **free** key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) — no credit card required.
 
 ### 3. Run locally
 
@@ -35,9 +35,9 @@ Get a key at [console.anthropic.com](https://console.anthropic.com).
 npm run dev
 ```
 
-Visit [http://localhost:5173](http://localhost:5173).
+Visit [http://localhost:5000](http://localhost:5000).
 
-The Vite dev server proxies `/api/*` to Anthropic with your key injected server-side, so it's never exposed in the browser.
+The Vite dev server proxies `/api/analyze` to Gemini with your key injected server-side, so it's never exposed in the browser.
 
 ---
 
@@ -65,7 +65,7 @@ git push -u origin main
 
 In your Vercel project:
 1. Go to **Settings → Environment Variables**
-2. Add: `ANTHROPIC_API_KEY` = `sk-ant-your-key-here`
+2. Add: `GEMINI_API_KEY` = `your-gemini-key-here`
 3. Redeploy (Settings → Deployments → Redeploy)
 
 That's it — your site is live at `https://lablens.vercel.app` (or your custom domain).
@@ -78,6 +78,8 @@ That's it — your site is live at `https://lablens.vercel.app` (or your custom 
 lablens/
 ├── api/
 │   └── analyze.js        # Vercel serverless function (keeps API key secret)
+├── server/
+│   └── gemini.js         # Shared Gemini client used by dev proxy + Vercel function
 ├── public/
 │   └── favicon.svg
 ├── src/
@@ -96,24 +98,15 @@ lablens/
 
 1. User uploads a lab result image (JPG, PNG, WEBP)
 2. Frontend converts it to base64 and POSTs to `/api/analyze`
-3. The Vercel serverless function adds the secret API key and forwards to Anthropic
-4. Claude's vision model reads every test value and returns structured JSON
+3. The serverless function (or Vite dev proxy) adds the secret API key and forwards to Gemini
+4. Gemini's vision model reads every test value and returns structured JSON
 5. The UI renders each result with plain-language explanations and color-coded flags
 
 ## Security
 
-- The `ANTHROPIC_API_KEY` **never touches the browser** — it lives only in the serverless function
+- The `GEMINI_API_KEY` **never touches the browser** — it lives only in the serverless function
 - Images are sent directly in the request body and not stored anywhere
 - No database, no user accounts, no data persistence
-
-## Optional improvements
-
-| Feature | How |
-|---|---|
-| Rate limiting | Add [Upstash Redis](https://upstash.com) to `api/analyze.js` |
-| User auth | Integrate [Clerk](https://clerk.com) (~30 min) |
-| Usage tracking | Log to [PlanetScale](https://planetscale.com) or Vercel KV |
-| Custom domain | Vercel Settings → Domains |
 
 ---
 
