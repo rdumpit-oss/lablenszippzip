@@ -4,5 +4,7 @@ export const modules: ModuleMap = {
   "./components/mockups/lab-results/Current.tsx": () => import("../components/mockups/lab-results/Current.tsx"),
   "./components/mockups/lab-results/PriorityFeed.tsx": () => import("../components/mockups/lab-results/PriorityFeed.tsx"),
   "./components/mockups/lab-results/SplitRail.tsx": () => import("../components/mockups/lab-results/SplitRail.tsx"),
+  "./components/mockups/lab-results/SplitRailDesktop.tsx": () => import("../components/mockups/lab-results/SplitRailDesktop.tsx"),
+  "./components/mockups/lab-results/SplitRailTablet.tsx": () => import("../components/mockups/lab-results/SplitRailTablet.tsx"),
   "./components/mockups/lab-results/TableDetail.tsx": () => import("../components/mockups/lab-results/TableDetail.tsx")
 };
