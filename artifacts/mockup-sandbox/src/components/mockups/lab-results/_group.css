@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap');
+
+.lab-results-root {
+  --lr-page-bg: #f7f3ee;
+  --lr-surface: #faf8f5;
+  --lr-surface-alt: #efe9e0;
+  --lr-input-bg: #f7f3ee;
+  --lr-text: #1a1612;
+  --lr-text-secondary: #3d3630;
+  --lr-text-muted: #7a7068;
+  --lr-text-faint: #b0a89e;
+  --lr-border: rgba(26, 22, 18, 0.1);
+  --lr-border-strong: rgba(26, 22, 18, 0.15);
+  --lr-border-faint: rgba(26, 22, 18, 0.06);
+  --lr-accent: #2d6a4f;
+  --lr-btn-bg: #1a1612;
+  --lr-btn-text: #f7f3ee;
+  --lr-shadow: 0 1px 3px rgba(26, 22, 18, 0.08);
+
+  --lr-normal-dot: #2d6a4f;
+  --lr-normal-text: #2d6a4f;
+  --lr-normal-bg: #e8f4ef;
+  --lr-normal-border: #a8d5bb;
+
+  --lr-attn-dot: #c87941;
+  --lr-attn-text: #c87941;
+  --lr-attn-bg: #fdf0e6;
+  --lr-attn-border: #f0c090;
+
+  --lr-crit-dot: #c0392b;
+  --lr-crit-text: #c0392b;
+  --lr-crit-bg: #fdecea;
+  --lr-crit-border: #f5a9a3;
+
+  --lr-overall-attn-bg: #fdf0e6;
+  --lr-overall-attn-border: #c87941;
+  --lr-overall-normal-bg: #e8f4ef;
+  --lr-overall-normal-border: #2d6a4f;
+  --lr-overall-crit-bg: #fdecea;
+  --lr-overall-crit-border: #c0392b;
+
+  font-family: Georgia, 'Times New Roman', serif;
+  background: var(--lr-page-bg);
+  color: var(--lr-text);
+  min-height: 100vh;
+}
+
+.lab-results-root .sans { font-family: 'Source Sans 3', system-ui, sans-serif; }
