@@ -138,21 +138,7 @@ export default function HomeScreen({
       {/* Background image */}
       <div
         aria-hidden
-        className="home-hero-bg"
-        style={{
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
-          backgroundImage: "url('/hero-bg.png')",
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "right center",
-          backgroundSize: "auto 100%",
-          opacity: theme === "dark" ? 0.18 : 0.12,
-          WebkitMaskImage:
-            "linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.45) 35%, rgba(0,0,0,0) 65%)",
-          maskImage:
-            "linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.45) 35%, rgba(0,0,0,0) 65%)",
-        }}
+        className={`home-hero-bg ${theme === "dark" ? "home-hero-bg--dark" : ""}`}
       />
 
       {/* Decorative glow */}
@@ -395,6 +381,35 @@ export default function HomeScreen({
           from { opacity: 0; transform: translateY(8px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+
+        .home-hero-bg {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background-image: url('/hero-bg.png');
+          background-repeat: no-repeat;
+          background-position: center center;
+          background-size: cover;
+          opacity: 0.10;
+          -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.65) 55%, rgba(0,0,0,1) 100%);
+          mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.65) 55%, rgba(0,0,0,1) 100%);
+        }
+        .home-hero-bg--dark { opacity: 0.16; }
+
+        @media (max-width: 960px) {
+          .home-hero-bg { opacity: 0.09; background-position: 70% center; }
+          .home-hero-bg--dark { opacity: 0.14; }
+        }
+        @media (max-width: 560px) {
+          .home-hero-bg {
+            opacity: 0.08;
+            background-position: center 20%;
+            -webkit-mask-image: radial-gradient(ellipse 95% 60% at 50% 35%, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,1) 100%);
+            mask-image: radial-gradient(ellipse 95% 60% at 50% 35%, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,1) 100%);
+          }
+          .home-hero-bg--dark { opacity: 0.13; }
+        }
+
         .home-cta-primary {
           display: inline-flex;
           align-items: center;
@@ -439,8 +454,15 @@ export default function HomeScreen({
           margin-top: 8px;
           text-align: left;
         }
+        @media (max-width: 960px) {
+          .home-features { gap: 20px; }
+        }
         @media (max-width: 760px) {
           .home-features { grid-template-columns: 1fr; gap: 18px; max-width: 360px; margin-left: auto; margin-right: auto; }
+        }
+        @media (max-width: 560px) {
+          .home-cta-primary { padding: 13px 18px; font-size: 14.5px; }
+          .home-cta-secondary { padding: 12px 16px; font-size: 14.5px; }
         }
       `}</style>
     </div>
