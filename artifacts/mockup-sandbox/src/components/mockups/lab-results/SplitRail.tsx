@@ -167,7 +167,11 @@ function fmtDate(lang: Lang) {
   });
 }
 
-export function SplitRail() {
+export function SplitRail({
+  width = 390,
+  height = 844,
+  chrome = true,
+}: { width?: number | string; height?: number | string; chrome?: boolean } = {}) {
   const [data, setData] = useState<LabResultsData>(SAMPLE_RESULTS);
   const [theme, setTheme] = useState<Theme>("light");
   const [lang, setLang] = useState<Lang>("en");
@@ -333,16 +337,16 @@ export function SplitRail() {
       className="lab-results-root"
       data-theme={theme}
       style={{
-        width: 390,
-        height: 844,
-        margin: "0 auto",
+        width,
+        height,
+        margin: chrome ? "0 auto" : 0,
         background: "var(--lr-page-bg)",
         color: "var(--lr-text)",
         position: "relative",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        boxShadow: "0 8px 30px rgba(26,22,18,0.08)",
+        boxShadow: chrome ? "0 8px 30px rgba(26,22,18,0.08)" : "none",
       }}
     >
       <input
@@ -353,26 +357,27 @@ export function SplitRail() {
         style={{ display: "none" }}
       />
 
-      {/* iOS status bar */}
-      <div
-        className="sans"
-        style={{
-          height: 44,
-          flexShrink: 0,
-          padding: "0 22px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          fontSize: 14,
-          fontWeight: 600,
-          color: "var(--lr-text)",
-        }}
-      >
-        <span>9:41</span>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-          <SignalIcon /><WifiIcon /><BatteryIcon />
-        </span>
-      </div>
+      {chrome && (
+        <div
+          className="sans"
+          style={{
+            height: 44,
+            flexShrink: 0,
+            padding: "0 22px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            fontSize: 14,
+            fontWeight: 600,
+            color: "var(--lr-text)",
+          }}
+        >
+          <span>9:41</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+            <SignalIcon /><WifiIcon /><BatteryIcon />
+          </span>
+        </div>
+      )}
 
       <TopBar
         title={selected ? selected.name.replace(/EPITHELIAL CELLS – /, "Epithelial · ") : "LabLens"}

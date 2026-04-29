@@ -16,7 +16,11 @@ import {
 
 type DesktopView = "overview" | "ask";
 
-export function SplitRailDesktop() {
+export function SplitRailDesktop({
+  width = 1280,
+  height = 860,
+  chrome = true,
+}: { width?: number | string; height?: number | string; chrome?: boolean } = {}) {
   const app = useLabApp();
   const [view, setView] = useState<DesktopView>("overview");
   const [sheet, setSheet] = useState<"none" | "analyze" | "language" | "theme" | "about">("none");
@@ -45,16 +49,16 @@ export function SplitRailDesktop() {
       className="lab-results-root"
       data-theme={app.theme}
       style={{
-        width: 1280,
-        height: 860,
-        margin: "0 auto",
+        width,
+        height,
+        margin: chrome ? "0 auto" : 0,
         background: "var(--lr-page-bg)",
         color: "var(--lr-text)",
         position: "relative",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        boxShadow: "0 8px 30px rgba(26,22,18,0.08)",
+        boxShadow: chrome ? "0 8px 30px rgba(26,22,18,0.08)" : "none",
       }}
     >
       <input

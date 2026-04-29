@@ -13,7 +13,11 @@ import {
   type Lang, type Tab, type Theme,
 } from "./_shared";
 
-export function SplitRailTablet() {
+export function SplitRailTablet({
+  width = 820,
+  height = 1180,
+  chrome = true,
+}: { width?: number | string; height?: number | string; chrome?: boolean } = {}) {
   const app = useLabApp();
   const [rightTab, setRightTab] = useState<Tab>("results");
   const [sheet, setSheet] = useState<"none" | "menu" | "analyze" | "language" | "theme" | "about">("none");
@@ -43,16 +47,16 @@ export function SplitRailTablet() {
       className="lab-results-root"
       data-theme={app.theme}
       style={{
-        width: 820,
-        height: 1180,
-        margin: "0 auto",
+        width,
+        height,
+        margin: chrome ? "0 auto" : 0,
         background: "var(--lr-page-bg)",
         color: "var(--lr-text)",
         position: "relative",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        boxShadow: "0 8px 30px rgba(26,22,18,0.08)",
+        boxShadow: chrome ? "0 8px 30px rgba(26,22,18,0.08)" : "none",
       }}
     >
       <input
@@ -63,30 +67,31 @@ export function SplitRailTablet() {
         style={{ display: "none" }}
       />
 
-      {/* iPad-style status bar */}
-      <div
-        className="sans"
-        style={{
-          height: 28,
-          flexShrink: 0,
-          padding: "0 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          fontSize: 12,
-          fontWeight: 600,
-          color: "var(--lr-text)",
-        }}
-      >
-        <span>9:41 AM · Mon Apr 28</span>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <span>Wi-Fi</span>
-          <span style={{ width: 22, height: 10, border: "1px solid currentColor", borderRadius: 2, padding: 1, display: "inline-flex" }}>
-            <span style={{ background: "currentColor", flex: 1, borderRadius: 1 }} />
+      {chrome && (
+        <div
+          className="sans"
+          style={{
+            height: 28,
+            flexShrink: 0,
+            padding: "0 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            fontSize: 12,
+            fontWeight: 600,
+            color: "var(--lr-text)",
+          }}
+        >
+          <span>9:41 AM · Mon Apr 28</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <span>Wi-Fi</span>
+            <span style={{ width: 22, height: 10, border: "1px solid currentColor", borderRadius: 2, padding: 1, display: "inline-flex" }}>
+              <span style={{ background: "currentColor", flex: 1, borderRadius: 1 }} />
+            </span>
+            <span>87%</span>
           </span>
-          <span>87%</span>
-        </span>
-      </div>
+        </div>
+      )}
 
       {/* Top bar */}
       <div
