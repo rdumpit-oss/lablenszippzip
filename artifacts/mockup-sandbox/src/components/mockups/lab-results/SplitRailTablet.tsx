@@ -142,9 +142,6 @@ export function SplitRailTablet({
           <IconButton onClick={() => setSheet("theme")} title={t.themeTitle}>
             {app.theme === "light" ? <SunIcon /> : <MoonIcon />}
           </IconButton>
-          <IconButton onClick={() => setSheet("language")} title={t.languageTitle}>
-            <GlobeIcon />
-          </IconButton>
           <button
             onClick={() => setSheet("analyze")}
             className="sans"
@@ -357,7 +354,6 @@ export function SplitRailTablet({
             <SheetItem label="Home" onClick={() => { setSheet("none"); onHome(); }} icon={<ChevronLeft />} />
           )}
           <SheetItem label={t.sheetAnalyzeOther} onClick={() => setSheet("analyze")} icon={<UploadIcon />} />
-          <SheetItem label={t.sheetLanguage} value={app.lang === "en" ? "English" : "Filipino"} onClick={() => setSheet("language")} icon={<GlobeIcon />} />
           <SheetItem label={t.sheetTheme} value={app.theme === "light" ? t.themeLight : t.themeDark} onClick={() => setSheet("theme")} icon={app.theme === "light" ? <SunIcon /> : <MoonIcon />} />
           <SheetItem label={t.sheetAbout} onClick={() => setSheet("about")} icon={<InfoIcon />} last />
         </Sheet>

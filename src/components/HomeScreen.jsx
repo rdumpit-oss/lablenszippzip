@@ -176,13 +176,6 @@ export default function HomeScreen({
           >
             {theme === "light" ? <SunIcon /> : <MoonIcon />}
           </IconButton>
-          <IconButton
-            title="Switch language"
-            onClick={() => onLang(lang === "en" ? "fil" : "en")}
-            label={lang.toUpperCase()}
-          >
-            <GlobeIcon />
-          </IconButton>
         </div>
       </header>
 

@@ -444,11 +444,6 @@ export function SplitRail({
           )}
           <SheetItem label={t.sheetAnalyzeOther} onClick={() => setSheet("analyze")} icon={<UploadIcon />} />
           <SheetItem
-            label={`${t.sheetLanguage} · ${lang === "en" ? "English" : "Filipino"}`}
-            onClick={() => setSheet("language")}
-            icon={<GlobeIcon />}
-          />
-          <SheetItem
             label={`${t.sheetTheme} · ${theme === "light" ? t.themeLight : t.themeDark}`}
             onClick={() => setSheet("theme")}
             icon={theme === "light" ? <SunIcon /> : <MoonIcon />}

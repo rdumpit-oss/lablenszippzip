@@ -79,7 +79,7 @@ export function SplitRailDesktop({
         style={{ display: "none" }}
       />
 
-      <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 3fr 1.25fr", overflow: "hidden", minHeight: 0 }}>
+      <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 2.5fr 1.6fr", overflow: "hidden", minHeight: 0 }}>
         {/* LEFT RAIL */}
         <aside
           style={{
@@ -156,9 +156,8 @@ export function SplitRailDesktop({
               icon={<UploadIcon />}
               onClick={() => setSheet("analyze")}
             />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 4 }}>
+            <div style={{ marginTop: 4 }}>
               <SmallButton onClick={() => setSheet("theme")} icon={app.theme === "light" ? <SunIcon /> : <MoonIcon />} label={app.theme === "light" ? t.themeLight : t.themeDark} />
-              <SmallButton onClick={() => setSheet("language")} icon={<GlobeIcon />} label={app.lang === "en" ? "English" : "Filipino"} />
             </div>
             <button
               onClick={() => setSheet("about")}
@@ -315,8 +314,9 @@ export function SplitRailDesktop({
         {/* RIGHT: chat */}
         <aside
           style={{
-            background: "var(--lr-surface)",
-            borderLeft: "1px solid var(--lr-border)",
+            background: "var(--lr-surface-alt)",
+            borderLeft: "3px solid var(--lr-overall-attn-border)",
+            boxShadow: "inset 6px 0 14px -10px rgba(0,0,0,0.18), -2px 0 18px -8px rgba(0,0,0,0.15)",
             display: "flex",
             flexDirection: "column",
             minHeight: 0,
@@ -325,13 +325,14 @@ export function SplitRailDesktop({
         >
           <div
             style={{
-              padding: "14px 18px",
-              borderBottom: "1px solid var(--lr-border-faint)",
+              padding: "16px 20px",
+              borderBottom: "1px solid var(--lr-border)",
               display: "flex",
               alignItems: "center",
-              gap: 10,
+              gap: 12,
               flexShrink: 0,
-              minHeight: 56,
+              minHeight: 60,
+              background: "var(--lr-surface)",
             }}
           >
             <div
