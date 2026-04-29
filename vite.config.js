@@ -34,10 +34,13 @@ function geminiProxyPlugin() {
   return {
     name: "gemini-proxy",
     configureServer(server) {
-      const apiKey = () => (process.env.GEMINI_API_KEY || "").trim();
+      const apiKeys = () =>
+        [process.env.GEMINI_API_KEY, process.env.GEMINI_API_KEY_2]
+          .map((k) => (k || "").trim())
+          .filter((k) => k.length > 0);
 
       server.middlewares.use("/api/analyze", jsonRoute((body) => analyzeWithGemini({
-        apiKey: apiKey(),
+        apiKey: apiKeys(),
         imageData: body.imageData,
         mediaType: body.mediaType,
         context: body.context,
@@ -45,7 +48,7 @@ function geminiProxyPlugin() {
       })));
 
       server.middlewares.use("/api/chat", jsonRoute((body) => chatWithGemini({
-        apiKey: apiKey(),
+        apiKey: apiKeys(),
         language: body.language,
         labContext: body.labContext,
         messages: body.messages,

@@ -191,37 +191,52 @@ Guidelines:
 }
 
 async function callGemini(payload, apiKey) {
-  // Try each model in order. For each model, retry transient overload errors with backoff.
+  // apiKey may be a single string or an array of keys (fallback order).
+  const keys = (Array.isArray(apiKey) ? apiKey : [apiKey]).filter((k) => typeof k === "string" && k.length > 0);
+  // Try each key. For each key, try each model. For each model, retry transient overload errors with backoff.
+  // 429 rate-limit errors trigger an immediate switch to the next key.
   const transient = new Set([429, 500, 502, 503, 504]);
   let lastUpstream = null;
   let lastData = null;
 
-  for (const model of GEMINI_MODELS) {
-    const url = `${geminiUrl(model)}?key=${encodeURIComponent(apiKey)}`;
-    const delays = [0, 800, 2000]; // up to 3 attempts per model
-    for (let i = 0; i < delays.length; i++) {
-      if (delays[i] > 0) await sleep(delays[i]);
-      let upstream, data;
-      try {
-        upstream = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        data = await upstream.json().catch(() => ({}));
-      } catch (err) {
-        lastUpstream = { ok: false, status: 502 };
-        lastData = { error: { message: err?.message || "network error" } };
-        continue;
+  for (let k = 0; k < keys.length; k++) {
+    const key = keys[k];
+    let rateLimited = false;
+
+    for (const model of GEMINI_MODELS) {
+      if (rateLimited) break;
+      const url = `${geminiUrl(model)}?key=${encodeURIComponent(key)}`;
+      const delays = [0, 800, 2000]; // up to 3 attempts per model
+      for (let i = 0; i < delays.length; i++) {
+        if (delays[i] > 0) await sleep(delays[i]);
+        let upstream, data;
+        try {
+          upstream = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          data = await upstream.json().catch(() => ({}));
+        } catch (err) {
+          lastUpstream = { ok: false, status: 502 };
+          lastData = { error: { message: err?.message || "network error" } };
+          continue;
+        }
+        lastUpstream = upstream;
+        lastData = data;
+        if (upstream.ok) return { upstream, data };
+        if (upstream.status === 429) {
+          // Rate-limit on this key — stop trying models with this key, switch to next key immediately.
+          console.warn(`[gemini] key #${k + 1} rate-limited on ${model}, switching to next key`);
+          rateLimited = true;
+          break;
+        }
+        if (!transient.has(upstream.status)) {
+          // Non-transient error (auth, bad request, etc) — don't retry, don't try other models/keys
+          return { upstream, data };
+        }
+        // transient — loop to next attempt; if exhausted, fall through to next model
       }
-      lastUpstream = upstream;
-      lastData = data;
-      if (upstream.ok) return { upstream, data };
-      if (!transient.has(upstream.status)) {
-        // Non-transient error (auth, bad request, etc) — don't retry, don't try other models
-        return { upstream, data };
-      }
-      // transient — loop to next attempt; if exhausted, fall through to next model
     }
   }
   return { upstream: lastUpstream, data: lastData };

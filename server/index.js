@@ -10,16 +10,19 @@ const app = express();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "20mb" }));
 
-const apiKey = () => (process.env.GEMINI_API_KEY || "").trim();
+const apiKeys = () =>
+  [process.env.GEMINI_API_KEY, process.env.GEMINI_API_KEY_2]
+    .map((k) => (k || "").trim())
+    .filter((k) => k.length > 0);
 
 app.get("/healthz", (_req, res) => {
-  res.json({ ok: true, hasApiKey: apiKey().length > 0 });
+  res.json({ ok: true, apiKeys: apiKeys().length });
 });
 
 app.post("/api/analyze", async (req, res) => {
   try {
     const result = await analyzeWithGemini({
-      apiKey: apiKey(),
+      apiKey: apiKeys(),
       imageData: req.body?.imageData,
       mediaType: req.body?.mediaType,
       context: req.body?.context,
@@ -35,7 +38,7 @@ app.post("/api/analyze", async (req, res) => {
 app.post("/api/chat", async (req, res) => {
   try {
     const result = await chatWithGemini({
-      apiKey: apiKey(),
+      apiKey: apiKeys(),
       language: req.body?.language,
       labContext: req.body?.labContext,
       messages: req.body?.messages,
