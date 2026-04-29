@@ -79,7 +79,7 @@ export function SplitRailDesktop({
         style={{ display: "none" }}
       />
 
-      <div style={{ flex: 1, display: "grid", gridTemplateColumns: "260px 1fr 460px", overflow: "hidden", minHeight: 0 }}>
+      <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 3fr 1.25fr", overflow: "hidden", minHeight: 0 }}>
         {/* LEFT RAIL */}
         <aside
           style={{
