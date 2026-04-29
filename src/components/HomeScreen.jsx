@@ -135,6 +135,26 @@ export default function HomeScreen({
         style={{ display: "none" }}
       />
 
+      {/* Background image */}
+      <div
+        aria-hidden
+        className="home-hero-bg"
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          backgroundImage: "url('/hero-bg.png')",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "right center",
+          backgroundSize: "auto 100%",
+          opacity: theme === "dark" ? 0.18 : 0.12,
+          WebkitMaskImage:
+            "linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.45) 35%, rgba(0,0,0,0) 65%)",
+          maskImage:
+            "linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.45) 35%, rgba(0,0,0,0) 65%)",
+        }}
+      />
+
       {/* Decorative glow */}
       <div
         aria-hidden
