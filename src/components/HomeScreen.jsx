@@ -390,24 +390,24 @@ export default function HomeScreen({
           background-repeat: no-repeat;
           background-position: center center;
           background-size: cover;
-          opacity: 0.10;
-          -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.65) 55%, rgba(0,0,0,1) 100%);
-          mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.65) 55%, rgba(0,0,0,1) 100%);
+          opacity: 0.22;
+          -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.75) 55%, rgba(0,0,0,1) 100%);
+          mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.75) 55%, rgba(0,0,0,1) 100%);
         }
-        .home-hero-bg--dark { opacity: 0.16; }
+        .home-hero-bg--dark { opacity: 0.30; }
 
         @media (max-width: 960px) {
-          .home-hero-bg { opacity: 0.09; background-position: 70% center; }
-          .home-hero-bg--dark { opacity: 0.14; }
+          .home-hero-bg { opacity: 0.20; background-position: 70% center; }
+          .home-hero-bg--dark { opacity: 0.27; }
         }
         @media (max-width: 560px) {
           .home-hero-bg {
-            opacity: 0.08;
+            opacity: 0.18;
             background-position: center 20%;
-            -webkit-mask-image: radial-gradient(ellipse 95% 60% at 50% 35%, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,1) 100%);
-            mask-image: radial-gradient(ellipse 95% 60% at 50% 35%, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,1) 100%);
+            -webkit-mask-image: radial-gradient(ellipse 95% 60% at 50% 35%, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.8) 60%, rgba(0,0,0,1) 100%);
+            mask-image: radial-gradient(ellipse 95% 60% at 50% 35%, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.8) 60%, rgba(0,0,0,1) 100%);
           }
-          .home-hero-bg--dark { opacity: 0.13; }
+          .home-hero-bg--dark { opacity: 0.25; }
         }
 
         .home-cta-primary {
