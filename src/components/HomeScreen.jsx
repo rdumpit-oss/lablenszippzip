@@ -277,10 +277,6 @@ export default function HomeScreen({
                     <UploadIcon />
                     <span>{t.ctaAnalyze}</span>
                   </button>
-                  <button onClick={onUseSample} className="sans home-cta-secondary">
-                    <span>{t.ctaSample}</span>
-                    <span style={{ marginLeft: 2 }}>→</span>
-                  </button>
                 </div>
                 <div className="sans" style={{ fontSize: 11.5, color: "var(--lr-text-faint)", letterSpacing: "0.06em" }}>
                   {t.formats}
@@ -336,7 +332,7 @@ export default function HomeScreen({
               display: "flex",
               alignItems: "center",
               gap: 14,
-              maxWidth: 420,
+              maxWidth: 520,
               margin: "56px auto 28px",
               opacity: 0.5,
             }}
