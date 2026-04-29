@@ -167,14 +167,34 @@ function fmtDate(lang: Lang) {
   });
 }
 
+export type SplitRailProps = {
+  width?: number | string;
+  height?: number | string;
+  chrome?: boolean;
+  initialData?: LabResultsData;
+  initialTheme?: Theme;
+  initialLang?: Lang;
+  onThemeChange?: (theme: Theme) => void;
+  onLangChange?: (lang: Lang) => void;
+  onHome?: () => void;
+};
+
 export function SplitRail({
   width = 390,
   height = 844,
   chrome = true,
-}: { width?: number | string; height?: number | string; chrome?: boolean } = {}) {
-  const [data, setData] = useState<LabResultsData>(SAMPLE_RESULTS);
-  const [theme, setTheme] = useState<Theme>("light");
-  const [lang, setLang] = useState<Lang>("en");
+  initialData,
+  initialTheme,
+  initialLang,
+  onThemeChange,
+  onLangChange,
+  onHome,
+}: SplitRailProps = {}) {
+  const [data, setData] = useState<LabResultsData>(initialData || SAMPLE_RESULTS);
+  const [theme, setThemeState] = useState<Theme>(initialTheme || "light");
+  const [lang, setLangState] = useState<Lang>(initialLang || "en");
+  const setTheme = (next: Theme) => { setThemeState(next); onThemeChange?.(next); };
+  const setLang  = (next: Lang)  => { setLangState(next);  onLangChange?.(next);  };
   const t = STRINGS[lang];
 
   const [tab, setTab] = useState<Tab>("results");
@@ -419,6 +439,9 @@ export function SplitRail({
       {/* MENU */}
       {sheet === "menu" && (
         <Sheet onClose={() => setSheet("none")}>
+          {onHome && (
+            <SheetItem label="Home" onClick={() => { setSheet("none"); onHome(); }} icon={<ChevronLeft />} />
+          )}
           <SheetItem label={t.sheetAnalyzeOther} onClick={() => setSheet("analyze")} icon={<UploadIcon />} />
           <SheetItem
             label={`${t.sheetLanguage} · ${lang === "en" ? "English" : "Filipino"}`}

@@ -203,11 +203,22 @@ export function GlossyText({
 }
 
 /* ---------- useLabApp hook ---------- */
-export function useLabApp() {
-  const [data, setData] = useState<LabResultsData>(SAMPLE_RESULTS);
-  const [theme, setTheme] = useState<Theme>("light");
-  const [lang, setLang] = useState<Lang>("en");
+export type UseLabAppOptions = {
+  initialData?: LabResultsData;
+  initialTheme?: Theme;
+  initialLang?: Lang;
+  onThemeChange?: (theme: Theme) => void;
+  onLangChange?: (lang: Lang) => void;
+};
+
+export function useLabApp(opts: UseLabAppOptions = {}) {
+  const [data, setData] = useState<LabResultsData>(opts.initialData || SAMPLE_RESULTS);
+  const [theme, setThemeState] = useState<Theme>(opts.initialTheme || "light");
+  const [lang, setLangState] = useState<Lang>(opts.initialLang || "en");
   const t = STRINGS[lang];
+
+  const setTheme = (next: Theme) => { setThemeState(next); opts.onThemeChange?.(next); };
+  const setLang  = (next: Lang)  => { setLangState(next);  opts.onLangChange?.(next);  };
 
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [glossPopup, setGlossPopup] = useState<{ term: string; def: string } | null>(null);

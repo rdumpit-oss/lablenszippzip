@@ -12,16 +12,26 @@ import {
   Sheet, StatPill, SunIcon, UploadIcon,
   useLabApp,
   type Lang, type Theme,
+  type UseLabAppOptions,
 } from "./_shared";
 
 type DesktopView = "overview" | "ask";
+
+export type SplitRailDesktopProps = {
+  width?: number | string;
+  height?: number | string;
+  chrome?: boolean;
+  onHome?: () => void;
+} & UseLabAppOptions;
 
 export function SplitRailDesktop({
   width = 1280,
   height = 860,
   chrome = true,
-}: { width?: number | string; height?: number | string; chrome?: boolean } = {}) {
-  const app = useLabApp();
+  onHome,
+  ...labOpts
+}: SplitRailDesktopProps = {}) {
+  const app = useLabApp(labOpts);
   const [view, setView] = useState<DesktopView>("overview");
   const [sheet, setSheet] = useState<"none" | "analyze" | "language" | "theme" | "about">("none");
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -93,6 +103,13 @@ export function SplitRailDesktop({
 
           {/* Nav */}
           <div style={{ padding: "14px 12px", display: "flex", flexDirection: "column", gap: 3 }}>
+            {onHome && (
+              <NavItem
+                label="Home"
+                icon={<ChevronLeft />}
+                onClick={onHome}
+              />
+            )}
             <NavItem
               label={t.overview}
               icon={<ListIcon />}

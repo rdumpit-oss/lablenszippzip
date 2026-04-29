@@ -4,6 +4,7 @@ import {
   AnalyzeSheetContent,
   BrandMark, BrandWordmark,
   ChatBubbleIcon, ChatComposer, ChatThread,
+  ChevronLeft,
   GlobeIcon, HelpIcon, InfoIcon, ListIcon,
   MenuIcon, Modal, MoonIcon,
   OVERALL,
@@ -11,14 +12,24 @@ import {
   Sheet, SheetItem, StatPill, SunIcon, UploadIcon,
   useLabApp,
   type Lang, type Tab, type Theme,
+  type UseLabAppOptions,
 } from "./_shared";
+
+export type SplitRailTabletProps = {
+  width?: number | string;
+  height?: number | string;
+  chrome?: boolean;
+  onHome?: () => void;
+} & UseLabAppOptions;
 
 export function SplitRailTablet({
   width = 820,
   height = 1180,
   chrome = true,
-}: { width?: number | string; height?: number | string; chrome?: boolean } = {}) {
-  const app = useLabApp();
+  onHome,
+  ...labOpts
+}: SplitRailTabletProps = {}) {
+  const app = useLabApp(labOpts);
   const [rightTab, setRightTab] = useState<Tab>("results");
   const [sheet, setSheet] = useState<"none" | "menu" | "analyze" | "language" | "theme" | "about">("none");
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -342,6 +353,9 @@ export function SplitRailTablet({
       {/* Sheets */}
       {sheet === "menu" && (
         <Sheet onClose={() => setSheet("none")}>
+          {onHome && (
+            <SheetItem label="Home" onClick={() => { setSheet("none"); onHome(); }} icon={<ChevronLeft />} />
+          )}
           <SheetItem label={t.sheetAnalyzeOther} onClick={() => setSheet("analyze")} icon={<UploadIcon />} />
           <SheetItem label={t.sheetLanguage} value={app.lang === "en" ? "English" : "Filipino"} onClick={() => setSheet("language")} icon={<GlobeIcon />} />
           <SheetItem label={t.sheetTheme} value={app.theme === "light" ? t.themeLight : t.themeDark} onClick={() => setSheet("theme")} icon={app.theme === "light" ? <SunIcon /> : <MoonIcon />} />
